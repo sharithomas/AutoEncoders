@@ -200,5 +200,181 @@ for i in range(5):
 
 plt.show()
 
+#Model Architecture
+
+# create a class for the model
+def makeTheNet():
+
+  class gausnet(nn.Module):
+    def __init__(self):
+      super().__init__()
+      
+      # encoding layer
+      self.enc = nn.Sequential(
+          nn.Conv2d(1, 16, 3, stride=2, padding=1),
+          nn.ReLU(),
+          nn.Conv2d(16, 32, 3, stride=2, padding=1),
+          nn.ReLU(),
+          nn.Conv2d(32, 64, 7),
+
+   
+          )
+      
+      # decoding layer
+      self.dec = nn.Sequential(
+          nn.ConvTranspose2d(64, 32, 7),
+          nn.ReLU(),
+          nn.ConvTranspose2d(32, 16, 3, stride=2, padding=1, output_padding=1),
+          nn.ReLU(),
+          nn.ConvTranspose2d(16, 1, 3, stride=2, padding=1, output_padding=1),
+          nn.Sigmoid()
+          )
+      
+    def forward(self,x):
+      return self.dec( self.enc(x) )
+  
+  # create the model instance
+  net = gausnet()
+  
+  # loss function
+  lossfun = nn.MSELoss()
+
+  # optimizer
+  optimizer = torch.optim.Adam(net.parameters(),lr=.001)
+
+  return net,lossfun,optimizer
+
+# test the model with one batch
+net,lossfun,optimizer = makeTheNet()
+
+yHat = net(imagesOcc[:5,:,:,:])
+
+# check size of output
+print(' ')
+print(yHat.shape)
+print(imagesOcc.shape)
+
+
+# let's see how they look
+fig,ax = plt.subplots(1,2,figsize=(8,3))
+ax[0].imshow(torch.squeeze(imagesOcc[0,0,:,:]).detach(),cmap='jet')
+ax[0].set_title('Model input')
+ax[1].imshow(torch.squeeze(yHat[0,0,:,:]).detach(),cmap='jet')
+ax[1].set_title('Model output')
+
+plt.show()
+
+
+# a function that trains the model
+
+def function2trainTheModel():
+
+  # number of epochs
+  numepochs = 1000
+  
+  # create a new model
+  net,lossfun,optimizer = makeTheNet()
+
+   # model
+  net.to(device)
+
+
+  # initialize losses
+  losses = torch.zeros(numepochs)
+
+  # loop over epochs
+  for epochi in range(numepochs):
+      
+    print("Epoch no: ",epochi)
+      
+    # pick a set of images at random
+    pics2use = np.random.choice(img_count,size=32,replace=False)
+
+    # get the input (has occlusions) and the target (no occlusions)
+    X = imagesOcc[pics2use,:,:,:]
+    Y = imagesNoOcc[pics2use,:,:,:]
+
+    # data
+    X=X.to(device)
+    Y=Y.to(device)
+
+    # forward pass and loss
+    yHat = net(X)
+    loss = lossfun(yHat,Y)
+    losses[epochi] = loss.item()
+    
+
+    # backprop
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+  # end epochs
+
+  # function output
+  return losses,net,Y,yHat
+
+# test the model on a bit of data
+losses,net,Y,yHat = function2trainTheModel()
+
+file='/content/drive/MyDrive/HWR/model.pth'
+torch.save(net.state_dict(), file)
+
+plt.plot(losses,'s-',label='Train')
+plt.xlabel('Epochs')
+plt.ylabel('Loss (MSE)')
+plt.title('Model loss')
+
+plt.show()
+
+#Output for test images
+pics2use = np.random.choice(img_count,size=32,replace=False)
+X = imagesOcc[pics2use,:,:,:].to(device)
+yHat = net(X)
+
+fig,ax = plt.subplots(2,5,figsize=(15,3))
+for i in range(5):
+    
+  #whichpic = np.random.randint(img_count)
+    
+  I1 = torch.squeeze(X[i,:,:] ).detach().cpu()
+  I2 = torch.squeeze( yHat[i,:,:] ).detach().cpu()
+  
+    
+  ax[0,i].imshow(I1)
+  ax[0,i].set_xticks([]), ax[0,i].set_yticks([])
+  
+  ax[1,i].imshow(I2 )
+  ax[1,i].set_xticks([]), ax[1,i].set_yticks([])
+
+plt.show()
+
+#Inference Model
+net.load_state_dict(torch.load('/content/drive/MyDrive/HWR/model.pth'))
+
+image=cv2.imread('/content/drive/MyDrive/HWR/sample.png')
+
+plt.imshow(image)
+
+gray_image = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+gray_image=255-gray_image
+
+resized=resize_without_distortion(gray_image)
+
+dataNorm = resized / np.max(resized)
+
+ # convert to tensor
+dataT= torch.tensor( dataNorm ).float()
+
+images_inference = torch.zeros(1,1,28,256)
+
+images_inference[0,:,:,:]=torch.Tensor(dataT).view(1,28,256)
+images_inference=images_inference.to(device)
+
+yHat_inference = net(images_inference).to(device)
+plt.imshow(torch.squeeze( images_inference[0,:,:] ).cpu())
+
+plt.imshow(torch.squeeze( yHat_inference[0,:,:] ).detach().cpu())
+
 
 
