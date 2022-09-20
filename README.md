@@ -13,6 +13,9 @@ All images are resized to a standard size of  28x256  without distortion and use
 Encoder- 3 convolution layer followed with ReLu activation function
 Decoder- 3ConvolutionalTranspose followed with ReLu activation function and Sigmoid function 
 
+![image](https://user-images.githubusercontent.com/61357572/191324754-5cf2441f-8548-4d9a-b753-52cc5090a9e0.png)
+
+
 For training give multidigit with line(Ocllusion) as input and Multidit without Line(NoOcllusion) as output.
 
 Below Shows some sample output:
