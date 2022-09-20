@@ -1,8 +1,24 @@
 # AutoEncoders
-Autoencoder is an unsupervised artificial neural network that is trained to copy its input to output. In the case of image data, the autoencoder will first encode the image into a lower-dimensional representation, then decodes that representation back to the image. Encoder-Decoder automatically consists of the following two structures:
+Autoencoder is an unsupervised artificial neural network. It is trained with orginal image as ouput. Here, first encode the image into a lower-dimensional representation, then decodes that representation back to the orginal image. Encoder-Decoder consists of the following two structures:
 The encoder- This network downsamples the data into lower dimensions.
 The decoder- This network reconstructs the original data from the lower dimension representation.
 
-Here, we use this Enoder-Decoder Architecture of Autoencoder for 2 applications - Line Removal from from handwritten digits and Resolution Enhancmnet of digits
+Here, use this Enoder-Decoder Architecture of Autoencoder for  Line Removal from from handwritten multidit digits 
 
-for both these applications training with 50k samples of mnist multidigit datas, which are created with program code mnist_multidigit_creation.py
+For training 50k samples of mnist multidigit datas are using , which are created with program code mnist_multidigit_creation.py
+
+All images are resized to a standard size of  28x256  without distortion and used image padding
+
+#### Model Architecture
+Encoder- 3 convolution layer followed with ReLu activation function
+Decoder- 3ConvolutionalTranspose followed with ReLu activation function and Sigmoid function 
+
+For training give multidigit with line(Ocllusion) as input and Multidit without Line(NoOcllusion) as output.
+
+Below Shows some sample output:
+
+![image](https://user-images.githubusercontent.com/61357572/191212878-655c2967-88e7-4097-92a2-b9308bd89311.png)
+
+
+
+ 
